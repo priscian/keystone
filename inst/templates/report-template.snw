@@ -1,0 +1,180 @@
+\documentclass[letterpaper]{article} % "letterpaper" or "a4paper"
+
+\usepackage[export]{adjustbox}
+\usepackage{amsfonts, amsmath, amssymb, amsthm}
+\usepackage[toc]{appendix}
+\usepackage{booktabs}
+\usepackage{caption}
+\usepackage{ctable}
+\usepackage{dcolumn}
+\usepackage{easyfig}
+\usepackage{enumerate}
+\usepackage{enumitem} % Might cause error "TeX capacity exceeded, sorry [grouping levels=255]"
+\usepackage{etoolbox}
+\usepackage{fancybox}
+\usepackage{fancyhdr}
+\usepackage{fancyvrb}
+\usepackage{filecontents}
+\usepackage{flafter} % Force floats to appear after they're defined
+\usepackage[T1]{fontenc}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{ifthen}
+\usepackage[ansinew]{inputenc}
+\usepackage{lipsum}
+\usepackage{lmodern}
+\usepackage{longtable}
+\usepackage{tabu, tabularx}
+\usepackage{lscape}
+\usepackage{morefloats}
+\usepackage{pdflscape}
+\usepackage{pdfpages}
+\usepackage{pgfpages}
+\usepackage[section]{placeins} % Sections include \FloatBarrier to keep floats from moving over it
+\usepackage{ragged2e}
+\usepackage{relsize}
+\usepackage{rotating}
+\usepackage{siunitx} % Supersedes "SIunits"
+\usepackage{Sweave}
+\usepackage{textcomp}
+%\usepackage{tocbibind}
+\usepackage{tocloft}
+\usepackage{url}
+\usepackage{xspace}
+
+\usepackage[american]{babel}
+\usepackage{csquotes} % Must load after "inputenc"
+\usepackage[natbib=true, backend=biber, style=nejm]{biblatex}
+%\DeclareLanguageMapping{american}{american-apa}
+
+\graphicspath{{@@GRAPHICSPATH@@}}
+
+\geometry{letterpaper, margin=1.0in} % "letterpaper" or "a4paper"
+
+% Fix tex4ht issues with biblatex:
+\makeatletter
+\newcommand\blx@unitmark{23sp}
+\makeatother
+
+\providebool{htlatex}
+\setbool{htlatex}{false} % true or false
+
+\notbool{htlatex}
+{
+  \usepackage[bookmarksnumbered, bookmarksopen=true, breaklinks]{hyperref}
+  \hypersetup{colorlinks, linkcolor=blue, linktoc=page}
+  \usepackage[all]{hypcap}
+  \usepackage{bookmark}
+}
+
+\input{glyphtounicode}
+
+\pdfglyphtounicode{f_f}{FB00}
+\pdfglyphtounicode{f_i}{FB01}
+\pdfglyphtounicode{f_l}{FB02}
+\pdfglyphtounicode{f_f_i}{FB03}
+\pdfglyphtounicode{f_f_l}{FB04}
+
+\pdfgentounicode=1
+
+\pagestyle{fancyplain}
+
+%% Local macros:
+
+\renewcommand{\thefootnote}{\fnsymbol{footnote}}
+
+\newcommand{\discuss}{\textbf{Discussion.}\xspace}
+
+% From R console: Sweave("@@FILENAME@@", output="@@OUTPUT@@")
+
+%% Preliminaries:
+
+% Generate bookmarks for all tables and figures.
+\makeatletter
+\pretocmd\endtable{%
+  \addtocontents{lot}{\protect{%
+    \bookmark[
+      rellevel=1,
+      keeplevel,
+      dest=\@currentHref,
+    ]{Table \thetable: \@currentlabelname}}}%
+}{}{\errmessage{Patching \noexpand\endtable failed}}
+
+\pretocmd\endfigure{%
+  \addtocontents{lof}{\protect{%
+    \bookmark[
+      rellevel=1,
+      keeplevel,
+      dest=\@currentHref,
+    ]{Figure \thefigure: \@currentlabelname}}}%
+}{}{\errmessage{Patching \noexpand\endfigure failed}}
+\makeatother
+
+%\usepackage{here}
+
+% We can't use the "here" package if we want PDF bookmarks for tables & figures, so:
+\extrafloats{500}
+\maxdeadcycles=1000
+
+% Change bibliographical reference numbering style:
+\makeatletter
+  \renewcommand\@biblabel[1]{\textbf{#1.}}
+\makeatother
+
+\providebool{hastitle}
+\setbool{hastitle}{@@HASTITLE@@} % true or false
+
+\providebool{hasbib}
+\setbool{hasbib}{@@HASBIB@@} % true or false
+
+\ifbool{hasbib}
+{
+  \bibliography{@@BIBPATH@@} % C:/common/tex/gog
+}
+
+\title{@@TITLE@@}
+\author{@@AUTHOR@@}
+\date{@@DATE@@}
+
+%%%%% End of preamble
+
+\begin{document}
+
+\fancyhead{}
+\renewcommand{\headrulewidth}{0pt} % remove the header rule
+
+%% Document title:
+\ifbool{hastitle}
+  { \maketitle }
+
+%\lipsum[1-4]
+
+\clearpage
+
+\tableofcontents
+
+\clearpage
+
+\phantomsection
+\addcontentsline{toc}{section}{List of Tables}
+\listoftables
+
+\phantomsection
+\addcontentsline{toc}{section}{List of Figures}
+\listoffigures
+
+\clearpage
+
+@@DOCUMENT@@ % This must be on its own line
+%%%%% End new markup
+
+%% Bibliography:
+\ifbool{hasbib}
+{
+  \clearpage
+  \printbibliography[title=References, heading=bibintoc]
+}
+
+\end{document}
+
+% From R console: Sweave("@@FILENAME@@", output="@@OUTPUT@@")

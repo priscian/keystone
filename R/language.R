@@ -10,7 +10,7 @@ poly_eval <- function(expr, envir = parent.frame(), env = rlang::caller_env(), .
 
   if (is.function(expr)) {
     #expr(...) # Change to 'do.call()' to include 'envir'
-    do.call(what = expr, args = plinth::get_dots(...)$arguments, envir = envir)
+    do.call(what = expr, args = get_dots(...)$arguments, envir = envir)
   } else if (rlang::is_expression(expr)) {
     rlang::eval_tidy(expr, env = env, ...)
   } else if (is.expression(expr)) {
