@@ -46,7 +46,9 @@ plot_series <- function(
   unit = NULL,
   dev.new... = list(), bg = scales::alpha("gray", 0.1),
   add = FALSE,
-  xaxs = "r", yaxs = "r",
+  xaxs = "r", yaxs = "r", cex.xaxis = 1.0, cex.yaxis = 1.0,
+  xaxisTicks... = list(), yaxisTicks... = list(), # Arguments to grDevices::axisTicks()
+  grid... = list(),
   conf_int = FALSE, conf_int_suffix = "_uncertainty", ci_alpha = 0.3, polygon... = list(),
   trend = FALSE, trend_lwd = lwd, trend_legend_inset = c(0.2, 0.2), trend... = list(), extra_trends = list(),
   loess = FALSE, loess... = list(), loess_series = NULL, lines.loess... = list(),
@@ -144,7 +146,6 @@ plot_series <- function(
   }
 
   ## Arguments for plotting.
-  xaxt <- "n"
   if (dev.cur() == 1L) { # If a graphics device is active, plot there instead of opening a new device.
     dev.newArgs <- list(
       width = 12.5, height = 7.3 # New default device of 1200 × 700 px at 96 DPI
@@ -249,19 +250,67 @@ plot_series <- function(
 
   ## N.B. I need more control over the grid here:
   if (!add) {
-    #grid(nx = NULL, ny = NULL, col = "lightgray", lty = "dotted", lwd = par("lwd"))
-    grid(nx = NULL, ny = NULL, col = "gray", lty = "solid", lwd = par("lwd"))
+    nx <- ny <- NULL
+    if (!is_invalid(xaxisTicks...)) nx <- NA
+    if (!is_invalid(yaxisTicks...)) ny <- NA
+
+    #graphics::grid(nx = NULL, ny = NULL, col = "gray", lty = "solid", lwd = par("lwd"))
+    gridArgs <- list(
+      nx = nx, ny = ny,
+      col = "gray",
+      lty = "solid",
+      lwd = par("lwd")
+    )
+    gridArgs <- utils::modifyList(gridArgs, grid..., keep.null = TRUE)
+
+    do.call(graphics::grid, gridArgs)
+
+    # grDevices::axisTicks(usr = par("usr")[1:2], log = FALSE, nint = 5) # E.g.
+    if (!is_invalid(xaxisTicks...)) {
+      xaxisTicksArgs <- list(
+        usr = par("usr")[1:2],
+        log = FALSE
+      )
+      xaxisTicksArgs <- utils::modifyList(xaxisTicksArgs, xaxisTicks..., keep.null = TRUE)
+      forceAllTicks <- xaxisTicksArgs$force; xaxisTicksArgs$force <- NULL
+
+      xaxisTicks <- do.call(grDevices::axisTicks, xaxisTicksArgs)
+
+      if (!is.null(forceAllTicks) && is.logical(forceAllTicks) && forceAllTicks)
+        mapply(graphics::axis, side = 1, at = xaxisTicks, labels = xaxisTicks, tick = FALSE, cex.axis = cex.xaxis)
+      else
+        graphics::axis(side = 1, at = xaxisTicks, labels = xaxisTicks, tick = FALSE, cex.axis = cex.xaxis)
+
+      abline(v = xaxisTicks, col = gridArgs$col, lty = gridArgs$lty, lwd = gridArgs$lwd)
+    } else {
+      ## V. https://stackoverflow.com/questions/22470114/removing-top-and-right-borders-from-boxplot-frame-in-r/62185904#62185904
+      #graphics::box(bty = "l") # L-shaped box
+      graphics::axis(1, labels = TRUE, wd = 0, lwd.ticks = 0, cex.axis = cex.xaxis) # Draw x-axis
+    }
+
+    if (!is_invalid(yaxisTicks...)) {
+      yaxisTicksArgs <- list(
+        usr = par("usr")[3:4],
+        log = FALSE
+      )
+      yaxisTicksArgs <- utils::modifyList(yaxisTicksArgs, yaxisTicks..., keep.null = TRUE)
+      forceAllTicks <- yaxisTicksArgs$force; yaxisTicksArgs$force <- NULL
+
+      yaxisTicks <- do.call(grDevices::axisTicks, yaxisTicksArgs)
+
+      if (!is.null(forceAllTicks) && is.logical(forceAllTicks) && forceAllTicks)
+        mapply(graphics::axis, side = 2, at = yaxisTicks, labels = yaxisTicks, tick = FALSE, cex.axis = cex.yaxis)
+      else
+        graphics::axis(side = 2, at = yaxisTicks, labels = yaxisTicks, tick = FALSE, cex.axis = cex.yaxis)
+
+      abline(h = yaxisTicks, col = gridArgs$col, lty = gridArgs$lty, lwd = gridArgs$lwd)
+    } else {
+      graphics::axis(2, labels = TRUE, lwd = 0, lwd.ticks = 0, cex.axis = cex.yaxis) # Draw y-axis
+    }
   }
 
   if (!is.null(bg)) {
     graphics::rect(par("usr")[1], par("usr")[3], par("usr")[2], par("usr")[4], border = NA, col = bg)
-  }
-
-  if (!add) {
-    ## V. https://stackoverflow.com/questions/22470114/removing-top-and-right-borders-from-boxplot-frame-in-r/62185904#62185904
-    #graphics::box(bty = "l") # L-shaped box
-    graphics::axis(1, lwd = 0, lwd.ticks = 0) # Draw x-axis
-    graphics::axis(2, lwd = 0, lwd.ticks = 0) # Draw y-axis
   }
 
   ## Evaluate expression after creating graphics device but before plotting series.
