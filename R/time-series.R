@@ -285,7 +285,7 @@ plot_series <- function(
     } else {
       ## V. https://stackoverflow.com/questions/22470114/removing-top-and-right-borders-from-boxplot-frame-in-r/62185904#62185904
       #graphics::box(bty = "l") # L-shaped box
-      graphics::axis(1, labels = TRUE, wd = 0, lwd.ticks = 0, cex.axis = cex.xaxis) # Draw x-axis
+      graphics::axis(1, labels = TRUE, lwd = 0, lwd.ticks = 0, cex.axis = cex.xaxis) # Draw x-axis
     }
 
     if (!is_invalid(yaxisTicks...)) {

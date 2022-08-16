@@ -30,7 +30,7 @@ psapply <- function(
 }
 
 
-## A "future.apply"-version of the 'plyr::l_ply()' function (simplified).
+## A "future.apply"-version of the 'plyr::l_ply()' function (simplified parameters).
 #' @export
 pl_ply <- function (
   .data,
