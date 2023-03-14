@@ -69,6 +69,90 @@ get_all_args <- function(defaults = FALSE)
 }
 
 
+## Add argument 'clear_1_cache = TRUE/FALSE' to a 'memoise()'d function;
+##   this allows direct deletion of the function call's subcache file
+## N.B. This patch only works for memoization to a disk cache.
+#' @export
+patch_memoised_for_subcaching <- function(
+  fun # A 'memoise()'d function
+)
+{
+  if (!memoise::is.memoised(fun)) {
+    warning("Function is not 'memoise()'d")
+
+    return (fun)
+  }
+
+  flit <- function() { }
+  rlang::fn_body(flit) <- rlang::fn_body(fun)
+  formals(flit) <- args(fun) %>% formals %>% c(clear_1_cache = FALSE, SUFFIX = "")
+
+  ## Where does the 'key' assignment happen?
+  i <- sapply(as.list(rlang::fn_body(flit)),
+    function(a) { deparse(a) %>% stringr::str_detect("^\\s*key\\s*<-") %>% any },
+      simplify = TRUE) %>% which
+  ## Inject code to delete sub-cache of this function call
+  rlang::fn_body(flit) <- rlang::fn_body(flit) %>% as.list %>%
+    append(quote({
+      key <- encl$`_hash`(c(encl$`_f_hash`)) %>% paste0(SUFFIX)
+      cache_path <- encl$`_cache`$keys %>% environment %>% `$`("path")
+      ## Only proceed w/ subcache handling if function is memoised to a disk cache
+      if (!is.null(cache_path)) {
+        if (is.logical(clear_1_cache) && clear_1_cache) {
+          cache_1_path <- cache_path %>% normalizePath(winslash = "/") %>%
+            paste(key, sep = "/")
+          if (file.exists(cache_1_path)) {
+            file.remove(cache_1_path)
+            message(sprintf("Cache file '%s' was deleted", key))
+          } else {
+            warning(sprintf("Cache file '%s' doesn't exist", key))
+          }
+        } else if (is.character(clear_1_cache)) {
+          switch(clear_1_cache,
+            skip = {
+              message(sprintf("Skipping cache file '%s'", key))
+              return (invisible(NULL))
+            },
+            run = {
+              message(sprintf("Calling function without saving cache file '%s'", key))
+              mc[[1L]] <- encl$`_f`
+              res <- withVisible(eval(mc, parent.frame()))
+              if (res$visible)
+                return (res$value)
+              else
+                return (invisible(res$value))
+            },
+            {
+              message(sprintf("Invalid string passed to 'clear_1_cache' for cache file '%s'", key))
+              return (invisible(NULL))
+            }
+          )
+        }
+      } #else { message("Not a disk cache") }
+      res <- encl$`_cache`$get(key)
+      if (inherits(res, "key_missing")) {
+        message(sprintf("Saving cache file '%s'", key))
+      } else {
+        message(sprintf("Loading cache file '%s'", key))
+      }
+    }), i) %>%
+    append(quote({
+      clear_1_cache <- args$clear_1_cache
+      SUFFIX <- args$SUFFIX
+      if (is.null(clear_1_cache))
+        clear_1_cache <- FALSE
+      args$clear_1_cache <- NULL
+      #mc <- as.list(mc) %>% `[[<-`("clear_1_cache", NULL) %>% as.call
+      mc <- as.list(mc) %>% `[<-`(c("clear_1_cache", "SUFFIX"), NULL) %>% as.call
+    }), i - 1) %>% as.call
+
+  environment(flit) <- environment(fun)
+  attributes(flit) <- attributes(fun)
+
+  flit
+}
+
+
 ## Evaluate function inside an environment & extract & save any useful variables from its body
 #' @export
 cordon <- function(

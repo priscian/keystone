@@ -165,11 +165,17 @@ chunk.default <- function(x, size, ...)
 
 
 #'@export
-chunk.data.frame <- function(x, size, ...)
+chunk.data.frame <- function(x, size, by_column = FALSE, ...)
 {
-  s <- chunk.default(seq(NROW(x)), size, ...)
+  if (by_column) {
+    s <- chunk.default(seq(NCOL(x)), size, ...)
 
-  sapply(s, function(y) x[y, , drop = FALSE], simplify = FALSE)
+    sapply(s, function(y) x[, y, drop = FALSE], simplify = FALSE)
+  } else {
+    s <- chunk.default(seq(NROW(x)), size, ...)
+
+    sapply(s, function(y) x[y, , drop = FALSE], simplify = FALSE)
+  }
 }
 
 
@@ -259,3 +265,11 @@ combine_groups <- function(x, combine_fun = base::paste, ...)
 # colParts <- list(c("Global", "NH", "SH", "Tropics", "NH Extratropic", "SH Extratropic",
 #   "NH Polar", "SH Polar"), c("", " Land", " Ocean"))
 # combine_groups(colParts, sep = "")
+
+
+## Select every nth element of a vector starting at element 'offset'.
+#' @export
+every_nth_element <- function(x, interval, offset = 0)
+{
+  x[mod(seq_along(x), interval) == mod(offset, interval)]
+}

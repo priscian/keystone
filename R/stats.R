@@ -1,6 +1,6 @@
 ## Coefficient of variation
 #' @export
-cv <- function(x, na.rm = FALSE, ...) stats::sd(x, na.rm = na.rm) / stats::mean(x, na.rm = na.rm)
+cv <- function(x, na.rm = FALSE, ...) stats::sd(x, na.rm = na.rm) / mean(x, na.rm = na.rm)
 
 
 ## Robust coefficient of variation (rCV)

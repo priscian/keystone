@@ -7,9 +7,13 @@ psapply <- function(
   simplify = TRUE,
   USE.NAMES = TRUE,
   future.seed = TRUE,
-  future.globals.maxSize = Inf # E.g. 850 * 1024^2 = 891289600 MB to set upper limit
+  future.globals.maxSize = Inf, # E.g. 850 * 1024^2 = 891289600 MB to set upper limit
+  .parallel = TRUE # Use 'options(keystone_parallel = FALSE)' to turn off universally
 )
 {
+  if ((!is.null(getOption("keystone_parallel")) && !getOption("keystone_parallel")) || !.parallel)
+    return (sapply(X = X, FUN = FUN, ..., USE.NAMES = USE.NAMES, simplify = simplify))
+
   if (!is.null(future.globals.maxSize)) {
     op <- options("future.globals.maxSize")
     options(future.globals.maxSize = future.globals.maxSize)
@@ -37,9 +41,13 @@ pl_ply <- function (
   .fun,
   ...,
   future.seed = TRUE,
-  future.globals.maxSize = Inf # E.g. 850 * 1024^2 = 891289600 MB to set upper limit
+  future.globals.maxSize = Inf, # E.g. 850 * 1024^2 = 891289600 MB to set upper limit
+  .parallel = TRUE # Use 'options(keystone_parallel = FALSE)' to turn off universally
 )
 {
+  if ((!is.null(getOption("keystone_parallel")) && !getOption("keystone_parallel")) || !.parallel)
+    return (plyr::l_ply(.data = .data, .fun = .fun, ..., .parallel = FALSE))
+
   if (!is.null(future.globals.maxSize)) {
     op <- options("future.globals.maxSize")
     options(future.globals.maxSize = future.globals.maxSize)

@@ -474,7 +474,7 @@ plot_series <- function(
   ## Segmented linear regression.
   if (segmented) local({
     segmentedArgs <- list(
-      x = x,
+      x = y, # Was 'x = x' (06 Dec 2022)
       series = series,
       start = start,
       end = end,
@@ -775,7 +775,7 @@ create_smooth_variables <- function(
   d <- dplyr::bind_cols(d, d_loess)
   rm(d_loess)
 
-  # attr_frfast <- sapply(series,
+  #attr_frfast <- sapply(series,
   attr_frfast <- psapply(series,
     function(a)
     {
@@ -799,6 +799,7 @@ create_smooth_variables <- function(
           list(x_var = as.name(x_var), knots = ifelse(NROW(gam_data) < 10, NROW(gam_data), 10)))),
         data = gam_data,
         #h0 = -1,
+        p = 3,
         kbin = kbin,
         nboot = 100,
         smooth = "splines",

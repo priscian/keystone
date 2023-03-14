@@ -237,3 +237,27 @@ vline <- function(
 
   nop()
 }
+
+
+## grDevices::dev.print() may not include a background color; this update explicitly adds one
+## N.B. This doesn't work. Set e.g. 'par(bg = "white")' before plotting to screen device.
+#' @export
+dev_print <- function(
+  device = png,
+  ...,
+  bg = "white" # R default is often = "transparent"
+)
+{
+  op <- par(no.readonly = TRUE) # Store all current graphical parameters
+  par(bg = bg)
+
+  tryCatch({
+    r <- grDevices::dev.print(device = device, ..., bg = bg)
+  }, error = function(e) e, finally = par(op))  # Restore graphical parameters
+  #par(op)
+
+  return (r)
+}
+
+## usage:
+# dev_print(file = "./Downloads/001 - Maecker & Trotter 2006.png", device = png, width = 9.375, height = 7.3, units = "in", res = 600)

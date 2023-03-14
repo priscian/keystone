@@ -1,12 +1,12 @@
 Package: keystone
 Title: Provide "Keystone" Functions for Most Scripts or Packages
-Version: 0.3.1
+Version: 0.4.0
 Authors@R: person("Jim", "Java", email = "james.j.java@gmail.com", role = c("aut", "cre"),
   comment = c(ORCID = "0000-0002-8254-3177"))
 Description: Provide "keystone" functions for most scripts or packages.
 Depends: R (>= 3.5.0), magrittr, tribe, dplyr
 Suggests: knitr, pander, testthat
-Imports: utils, tools, methods,
+Imports: utils, tools, methods, memoise,
   devtools, remotes,
   pacman, foreign, rio, haven, readr,
   data.table, tibble, tidyr, plyr, purrr, naniar,
@@ -15,7 +15,7 @@ Imports: utils, tools, methods,
   forcats,
   stringr, rex,
   lubridate,
-  graphics, grDevices, ggplot2, scales, colorspace,
+  graphics, grDevices, ggplot2, scales, colorspace, magick,
   stats, rms,
   npregfast, strucchange, segmented,
   zoo,
