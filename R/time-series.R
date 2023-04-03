@@ -11,7 +11,8 @@ only_selected_series <- function(x, series, common_columns = NULL, sort = FALSE,
 
   if (!is.null(range)) {
     xVar <- x_var
-    r <- r[r[[xVar]] >= ifelse(is.na(range[1]), min(r[[xVar]], na.rm = TRUE), range[1]) & r[[xVar]] <= ifelse(is.na(range[2]), max(r[[xVar]]), range[2]), ]
+    r <- r[r[[xVar]] >= ifelse(is.na(range[1]), min(r[[xVar]], na.rm = TRUE),
+      range[1]) & r[[xVar]] <= ifelse(is.na(range[2]), max(r[[xVar]]), range[2]), ]
   }
 
   r
@@ -86,7 +87,8 @@ plot_series <- function(
     interpCols <- NULL
     if (is.logical(interpolate)) {
       if (all(interpolate))
-        w <<- interpNA(w, "linear", unwrap = TRUE)
+        ## Ensure that 'w' keeps its 'zoo' attributes:
+        w <<- w %@>% interpNA("linear", unwrap = TRUE)
       else if (any(interpolate)) {
         interpCols <- series[interpolate]
       }
@@ -97,14 +99,17 @@ plot_series <- function(
 
     if (!is.null(interpCols)) {
       for (i in interpCols)
-        w[, i] <<- drop(interpNA(w[, i], "linear", unwrap = TRUE))
+        ## Ensure that 'w' keeps its 'zoo' attributes:
+        w[, i] <<- drop(w[, i] %@>% interpNA("linear", unwrap = TRUE))
     }
   })
 
   ## Create moving-average variables if requested.
   maText <- ""
   if (!is.null(ma)) {
-    w[, c(series, ci_series)] <- MA(w[, c(series, ci_series)], ma, sides = ma_sides); w <- zoo::zoo(w, order.by = zoo::index(y))
+    #w[, c(series, ci_series)] <- MA(w[, c(series, ci_series)], ma, sides = ma_sides); w <- zoo::zoo(w, order.by = zoo::index(y))
+    ## Ensure that 'w' keeps its 'zoo' attributes:
+    w[, c(series, ci_series)] <- w[, c(series, ci_series)] %@>% MA(ma, sides = ma_sides)
     maText <- "(" %_% ma %_% "-month moving average)"
   }
 
@@ -203,7 +208,7 @@ plot_series <- function(
   }
 
   plotArgs1 <- list(
-    x <- w[, series],
+    x = w[, series],
     plot.type = plot_type,
     type = "n",
     xaxs = xaxs, yaxs = yaxs,
@@ -439,10 +444,15 @@ plot_series <- function(
       trendArgs$m[[i]]$sdata <- trendArgs$data %>%
         dplyr::select(c(intersect(common_columns, colnames(trendArgs$data)), names(trendArgs$m)[i])) %>%
         dplyr::filter(!!as.name(x_var) >= trendArgs$m[[i]]$range[1] & !!as.name(x_var) <= trendArgs$m[[i]]$range[2])
-      trendArgs$m[[i]]$lm <- lm(eval(substitute(b ~ x, list(b = as.name(names(trendArgs$m)[i]), x = as.name(x_var)))), data = trendArgs$m[[i]]$sdata, x = TRUE)
+      trendArgs$m[[i]]$lm <-
+        lm(eval(substitute(b ~ x,
+          list(b = as.name(names(trendArgs$m)[i]), x = as.name(x_var)))), data = trendArgs$m[[i]]$sdata, x = TRUE)
       trendArgs$m[[i]]$change <- coef(trendArgs$m[[i]]$lm)[2] * diff(range(trendArgs$m[[i]]$lm$model[, 2]))
       trendArgs$m[[i]]$rate <- coef(trendArgs$m[[i]]$lm)[2] * trendArgs$trend_multiplier
-      #trendArgs$m[[i]]$rateText <- eval(substitute(expression(paste(Delta, " = ", r, phantom(l), unit, denom_text, sep = "")), list(r = sprintf(trendArgs$m[[i]]$rate, fmt = trendArgs$fmt), unit = trendArgs$unit, denom_text = trendArgs$denom_text)))
+      # trendArgs$m[[i]]$rateText <-
+      #   eval(substitute(expression(paste(Delta, " = ", r, phantom(l), unit, denom_text, sep = "")),
+      #     list(r = sprintf(trendArgs$m[[i]]$rate, fmt = trendArgs$fmt), unit = trendArgs$unit,
+      #       denom_text = trendArgs$denom_text)))
       trendArgs$m[[i]]$rateText <- eval_js(sprintf(trendArgs$rate_expression, trendArgs$m[[i]]$rate))
     }
     if (trendArgs$sort_by_name)
@@ -466,7 +476,8 @@ plot_series <- function(
     }
 
     if (!is.null(trendArgs$legend_inset))
-      legend("bottomright", inset = trendArgs$legend_inset, legend = legendText, col = sapply(trendArgs$m, function(a) a$col), lwd = sapply(trendArgs$m, function(a) a$lwd), bty = "n", cex = 0.8)
+      legend("bottomright", inset = trendArgs$legend_inset, legend = legendText, col = sapply(trendArgs$m, function(a) a$col),
+        lwd = sapply(trendArgs$m, function(a) a$lwd), bty = "n", cex = 0.8)
 
     r$trend <<- trendArgs$m
   })

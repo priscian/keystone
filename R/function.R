@@ -97,7 +97,9 @@ patch_memoised_for_subcaching <- function(
       key <- encl$`_hash`(c(encl$`_f_hash`)) %>% paste0(SUFFIX)
       cache_path <- encl$`_cache`$keys %>% environment %>% `$`("path")
       ## Only proceed w/ subcache handling if function is memoised to a disk cache
-      if (!is.null(cache_path)) {
+      # cat(sprintf("'is.null(cache_path)' = %s", is.null(cache_path)), fill = TRUE) # Is function memoised to a disk cache?
+      # cat(sprintf("'clear_1_cache' = %s", clear_1_cache), fill = TRUE) # For debugging parallel invocations
+      if (!is.null(cache_path) || is.character(clear_1_cache)) {
         if (is.logical(clear_1_cache) && clear_1_cache) {
           cache_1_path <- cache_path %>% normalizePath(winslash = "/") %>%
             paste(key, sep = "/")
