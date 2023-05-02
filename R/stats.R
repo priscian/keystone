@@ -33,7 +33,8 @@ bd_rcv <- function(x, na.rm = FALSE, ...) bd_rsd(x, na.rm = na.rm) / stats::medi
 optimize_span <- function(
   model,
   criterion = c("aicc", "gcv"),
-  span_range = c(0.05, 0.95)
+  span_range = c(0.05, 0.95),
+  seed = 666
 )
 {
   as.crit <- function(x)
@@ -56,6 +57,8 @@ optimize_span <- function(
     as.crit(mod)[[criterion]]
   }
 
+  if (!is.null(seed))
+    set.seed(seed)
   result <- stats::optimize(fn, span_range)
 
   #return (list(span = result$minimum, criterion = result$objective))
@@ -87,19 +90,21 @@ LOESS <- function(
     span <- do.call(opt.span, optimize_spanArgs)
   }
 
-  fit <- stats::loess(formula = form, data = data, span = span, ...)
+  mod <- stats::loess(formula = form, data = data, span = span, ...)
 
   if (plot) { ## Adapted from 'fANCOVA::loess.as()'
-    x <- fit$x
-    fitPlot <- update(fit, control = loess.control(surface = "direct"))
+    x <- mod$x
+    modPlot <- update(mod, control = loess.control(surface = "direct"))
 
     if (NCOL(x) == 1) {
       m <- 100
       xNew <- seq(min(x, na.rm = TRUE), max(x, na.rm = TRUE), length.out = m)
-      fitNew <- stats::predict(fitPlot, dataframe(xNew) %>% `names<-`(tail(all.vars(form), -1)))
+      formVars <- all.vars(form)
+      fitNew <- stats::predict(modPlot, dataframe(xNew) %>% `names<-`(tail(formVars, -1)))
 
-      plot(form, data, col = "grey", xlab = "x", ylab = "m(x)", ...)
+      plot(form, data, col = "grey", xlab = formVars[2], ylab = formVars[1], ...)
       lines(xNew, fitNew, lwd = 1.5, ...)
+      mtext(sprintf("span: %1.2f", span), side = 3)
     } else {
       m <- 50
       x1 <- seq(min(x[, 1]), max(x[, 1]), len = m)
@@ -107,14 +112,15 @@ LOESS <- function(
       formVars <- all.vars(form)
       xNew <- expand.grid(x1 = x1, x2 = x2) %>%
         `names<-`(tail(formVars, -1)) %>% `length<-`(2)
-      fitNew <- matrix(stats::predict(fitPlot, xNew), m, m)
+      fitNew <- matrix(stats::predict(modPlot, xNew), m, m)
 
       graphics::persp(x1, x2, fitNew, theta = 40, phi = 30, ticktype = "detailed",
         xlab = formVars[2], ylab = formVars[3], zlab = formVars[1], col = "lightblue", expand = 0.6)
+      mtext(sprintf("span: %1.2f", span), side = 3)
     }
   }
 
-  return (fit)
+  return (mod)
 }
 
 ## usage:
