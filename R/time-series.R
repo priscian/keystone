@@ -389,11 +389,12 @@ plot_series <- function(
       yl <- as.vector(y[, s])
       loessArgs = list(
         formula = yl ~ xl,
-        span = 0.2
+        span = NULL # Was: 'span = 0.2'
       )
       loessArgs <- utils::modifyList(loessArgs, loess..., keep.null = TRUE)
 
-      l <- do.call(stats::loess, loessArgs)
+      #l <- do.call(stats::loess, loessArgs)
+      l <- do.call(LOESS, loessArgs)
 
       lines.loessArgs <- list(
         x = drop(l$x),
@@ -776,11 +777,12 @@ create_smooth_variables <- function(
       loessArgs = list(
         formula = eval(substitute(s ~ x_var, list(s = as.name(a %_% interpolated_suffix), x_var = as.name(x_var)))),
         data = d,
-        span = 0.2
+        span = NULL # Was: 'span = 0.2'
       )
       loessArgs <- utils::modifyList(loessArgs, loess..., keep.null = TRUE)
 
-      l <- do.call(stats::loess, loessArgs)
+      #l <- do.call(stats::loess, loessArgs)
+      l <- do.call(LOESS, loessArgs)
       stats::predict(l, newdata = d[[x_var]]) # Use 'newdata' here to include NAs.
     }, simplify = FALSE) %>% `names<-`(names(.) %_% loess_suffix) %>% dataframe()
   d <- dplyr::bind_cols(d, d_loess)

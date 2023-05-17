@@ -78,19 +78,26 @@ LOESS <- function(
   ...
 )
 {
+  ## See equivalent code in 'stats::loess()' to create data frame from 'formula':
+  mf <- match.call(expand.dots = FALSE)
+  mf$span <- mf$plot <- mf$optimize_span... <- mf$... <- NULL
+  mf[[1L]] <- quote(stats::model.frame)
+  mf <- eval(mf, parent.frame())
+
   opt.span <- optimize_span %>% `environment<-`(environment()) # Otherwise 'stats::optimize()' fails
-  form <- formula %>% `environment<-`(environment()) # Allows use of e.g. 'stats::model.frame()'
+  form <- formula
+  # form <- formula %>% `environment<-`(environment()) # Allows use of e.g. 'stats::model.frame()'
 
   if (is.null(span)) {
     optimize_spanArgs <- list(
-      model = stats::loess(formula = form, data = data, ...)
+      model = stats::loess(formula = form, data = mf, ...)
     )
     optimize_spanArgs <- utils::modifyList(optimize_spanArgs, optimize_span..., keep.null = TRUE)
 
     span <- do.call(opt.span, optimize_spanArgs)
   }
 
-  mod <- stats::loess(formula = form, data = data, span = span, ...)
+  mod <- stats::loess(formula = form, data = mf, span = span, ...)
 
   if (plot) { ## Adapted from 'fANCOVA::loess.as()'
     x <- mod$x
@@ -102,7 +109,7 @@ LOESS <- function(
       formVars <- all.vars(form)
       fitNew <- stats::predict(modPlot, dataframe(xNew) %>% `names<-`(tail(formVars, -1)))
 
-      plot(form, data, col = "grey", xlab = formVars[2], ylab = formVars[1], ...)
+      plot(form, mf, col = "grey", xlab = formVars[2], ylab = formVars[1], ...)
       lines(xNew, fitNew, lwd = 1.5, ...)
       mtext(sprintf("span: %1.2f", span), side = 3)
     } else {
