@@ -9,7 +9,7 @@
   if (!is.null(getOption("keystone_parallel")) && getOption("keystone_parallel")) {
     doFuture::registerDoFuture()
     future::plan(future::multisession,
-      workers = ifelse(future::availableCores() > 1L, future::availableCores() - 1L, 1L))
+      workers = ifelse(future::availableCores() > 1L, trunc(future::availableCores()/2), 1L))
   }
 }
 

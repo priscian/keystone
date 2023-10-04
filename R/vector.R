@@ -273,3 +273,27 @@ every_nth_element <- function(x, interval, offset = 0)
 {
   x[mod(seq_along(x), interval) == mod(offset, interval)]
 }
+
+
+## Create a named list from object symbols
+#' @export
+named_list <- function(
+  ..., # object symbols, separated by commas
+  ENVIR # if not missing, environment from which to take all objects en masse as a list; concat'd w/ '...' objects
+)
+{
+  edots <- get_dots(..., evaluate = TRUE)
+
+  r <- structure(edots$evaluated, .Names = sapply(edots$arguments, as.character))
+  blankIndex <- trimws(edots$dots_names) == ''
+  names(r)[!blankIndex] <- edots$dots_names[!blankIndex]
+
+  if (!missing(ENVIR)) {
+    r <- c(r, as.list(ENVIR))
+  }
+
+  r
+}
+
+## usage:
+# fish <- "frog"; named_list(10, raw, notfish = fish, pi = 3.14, TRUE, ENVIR = list2env(named_list(333, beast = 666)))

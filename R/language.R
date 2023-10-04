@@ -1,6 +1,31 @@
 #' @importFrom magrittr %>%
 #' @importFrom magrittr %<>%
 
+## https://stat.ethz.ch/R-manual/R-devel/library/methods/html/BasicClasses.html
+#' @export
+R_basic_classes <- function()
+{
+  cl <- list(
+    character = "character",
+    complex = "complex",
+    double = "double",
+    expression = "expression",
+    integer = "integer",
+    list = "list",
+    logical = "logical",
+    numeric = "numeric",
+    single = single(),
+    raw = "raw",
+    `NULL` = "NULL",
+    `function` = "function",
+    externalptr = "externalptr",
+    namedList = "namedList"
+  )
+
+  sapply(cl, function(a) { if (is.character(a)) new(a) else a })
+}
+
+
 ## Evaluate a number of different types of expressions
 #' @export
 poly_eval <- function(expr, envir = parent.frame(), env = rlang::caller_env(), ...)
