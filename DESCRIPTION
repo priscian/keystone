@@ -1,6 +1,6 @@
 Package: keystone
 Title: Provide "Keystone" Functions for Most Scripts or Packages
-Version: 0.7.0
+Version: 0.8.0
 Authors@R: person("Jim", "Java", email = "james.j.java@gmail.com", role = c("aut", "cre"),
   comment = c(ORCID = "0000-0002-8254-3177"))
 Description: Provide "keystone" functions for most scripts or packages.
@@ -15,7 +15,7 @@ Imports: utils, tools, methods, memoise,
   forcats,
   stringr, rex, textshape,
   lubridate,
-  graphics, grDevices, ggplot2, scales, colorspace, magick,
+  graphics, grDevices, ggplot2, scales, plotrix, colorspace, magick,
   stats, rms,
   npregfast, strucchange, segmented,
   zoo,

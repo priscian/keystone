@@ -183,7 +183,10 @@ find_peaks <- function(
   stepF = 0.49,
   height_divisor = 2, # finds full peak width at 1/height_divisor maximum; i.e. height_divisor = 2 is FWHM
   sort_on_x = TRUE,
-  truncate_overlaps = FALSE
+  truncate_overlaps = FALSE,
+  force_results = FALSE, # If no peaks found, estimate values from assumed histogram-type input
+  plot = FALSE,
+  ... # Passed to 'plot()'
 )
 {
   ok <- function (x)
@@ -287,7 +290,7 @@ find_peaks <- function(
       PW_match <- gregexpr("1+", flit)[[1]] # Find all continuous runs of "1"
       wyi <- which(y[i] == y)[1]
       ## Find which continuous run of "1" contains the peak, & calculate FW[height_divisor⁻¹th]M
-      PW <- mapply(structure(PW_match, .Names = PW_match), attr(PW_match,"match.length"),
+      PW <- mapply(structure(PW_match, .Names = PW_match), attr(PW_match, "match.length"),
         FUN = function(a, b) { wyi %between% c(a, a + b) }, SIMPLIFY = TRUE) %>% which %>%
         {
           if (is_invalid(.))
@@ -309,8 +312,28 @@ find_peaks <- function(
     }
   }
 
-  res <- dataframe(x = peak_x, y = peak_y, w = peak_w, w_min = peak_w_min, w_max = peak_w_max) %>%
-    dplyr::arrange(x)
+  res <- dataframe(x = peak_x, y = peak_y, w = peak_w, w_min = peak_w_min, w_max = peak_w_max)
+  if (is_invalid(res) && force_results) {
+    ## Approximate values from an assumed histogram-type input
+    ## V. https://www.statology.org/histogram-standard-deviation/
+    N <- sum(xy$y, na.rm = TRUE)
+    mu <- sum(xy$x * xy$y, na.rm = TRUE) / N
+    res <- dataframe(
+      x = mu,
+      y = xy$y[nearest(xy$x, mu, value = FALSE)],
+      w = sqrt(sum(xy$y * (xy$x - mu)^2) / (N - 1))
+    ) %>% dplyr::mutate(w_min = x - w/2, w_max = x + w/2)
+
+    warning("No peaks found; estimates calculated from assumed frequency data.", immediate. = FALSE)
+  }
+
+  if (is_invalid(res)) {
+    warning("No peaks found")
+
+    return (NA_real_)
+  }
+
+  res %<>% dplyr::arrange(x)
 
   if (truncate_overlaps) {
     if (NROW(res) > 1) {
@@ -319,5 +342,41 @@ find_peaks <- function(
     }
   }
 
+  res <- structure(res, "height_divisor" = height_divisor) %>% keystone::add_class("findPeaks")
+
+  if (plot) {
+    plot(xy$x, xy$y, main = 'Summary of keystone::find_peaks()', xlab = "x", ylab = "y", type= "l", ...)
+    plot(res) # I.e. 'plot.findPeaks()'
+  }
+
   return (res)
+}
+
+## usage:
+# stats::density(rnorm(1000)) %>% { keystone::find_peaks(.$x, .$y, plot = TRUE) }
+# keystone::find_peaks(seq(100), rep(10, 100), plot = TRUE, ylim = c(0, 10), force_results = TRUE)
+
+
+## Add "findPeaks" summary lines to an existing plot
+#' @export
+plot.findPeaks <- function(
+  x, # "findPeaks" object
+  ...
+)
+{
+  if (dev.cur() == 1) # Null device
+    error("No active graphics device to add to")
+
+    height_divisor <- attr(x, "height_divisor")
+    mtext(sprintf("height_divisor = %s (2 for FWHM)", height_divisor), side = 3)
+    vline(x$x %>% sprintf(fmt = "%g"))
+    cols <- colorspace::rainbow_hcl(NROW(x), l = 65)
+    plyr::l_ply(seq(NROW(x)),
+      function(l) {
+        o <- x[l, ]
+        lines(x = c(o[, "w_min"], o[, "w_max"]), y = c(o[, "y"] / height_divisor, o[, "y"] / height_divisor),
+          col = cols[l])
+      })
+
+  nop()
 }
