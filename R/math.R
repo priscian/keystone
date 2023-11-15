@@ -250,6 +250,11 @@ find_peaks <- function(
   yy <- xy$y
   min_yy <- min(yy, na.rm = TRUE)
   max_yy <- max(yy, na.rm = TRUE)
+  if (is_invalid(max_yy) || is_invalid(min_yy)) {
+    warning("Inadequate data for calculating peaks")
+
+    return (NA_real_)
+  }
   yy <- c(min_yy, yy)
   xx <- c(xx[1], xx)
   if (missing(thr))

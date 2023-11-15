@@ -29,8 +29,11 @@ backtick <- function(x, ...)
 #' @export
 capwords <- function(s, strict = FALSE)
 {
+  if (is_invalid(s))
+    return (NA_character_)
+
   cap <- function(s)
-      paste(toupper(substring(s, 1L, 1L)), { s <- substring(s, 2L); if (strict) tolower(s) else s }, sep = "", collapse = " ")
+    paste(toupper(substring(s, 1L, 1L)), { s <- substring(s, 2L); if (strict) tolower(s) else s }, sep = "", collapse = " ")
   sapply(strsplit(s, split = " "), cap, USE.NAMES = !is.null(names(s)))
 }
 
@@ -91,3 +94,13 @@ true_unicode <- function(x)
 
 #' @export
 tu <- true_unicode
+
+
+## Stolen from 'qdapRegex::is.regex()'
+#' @export
+is_regex <- function(pattern)
+{
+  out <- suppressWarnings(try(gsub(pattern, "", "hello", perl = TRUE), silent = TRUE))
+
+  ifelse (inherits(out, "try-error"), FALSE, TRUE)
+}

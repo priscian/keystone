@@ -274,7 +274,7 @@ every_nth_element <- function(x, interval, offset = 0)
 }
 
 
-## Create a named list from object symbols
+## Create a named list from object symbols (This needs work!)
 #' @export
 named_list <- function(
   ..., # object symbols, separated by commas
