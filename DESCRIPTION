@@ -21,7 +21,7 @@ Imports: utils, tools, methods, memoise,
   npregfast, strucchange, segmented,
   zoo,
   Hmisc, gtools
-Remotes: github::priscian/keystone, github::skgrange/threadr
+Remotes: github::priscian/keystone, github::skgrange/threadr, github::paulponcet/tribe
 License: Artistic-2.0
 Encoding: UTF-8
 LazyData: true
