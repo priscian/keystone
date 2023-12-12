@@ -410,3 +410,93 @@ build_report_document <- function(
   make_sweave_document(file_path_base %_% ".snw", output_path = output_path,
     header = header, document = document, bib = FALSE, ...)
 }
+
+
+#' Choose files interactively
+#'
+#' @details Open a file dialog. Uses JavaScript on Mac, utils::choose.files on Windows, and file.choose() on Linux
+#'
+#' @param ... Strings used to indicate which file types should be available for selection (e.g., "csv" or "pdf")
+#'
+#' @return Vector of paths to files selected by the user
+#'
+#' @examples
+#' \dontrun{
+#' choose_files("pdf", "csv")
+#' }
+#'
+
+## Swiped from package "radiant.data", which can be onerous to install
+#' @export
+choose_files <- function(...)
+{
+  argv <- unlist(list(...))
+  os_type <- Sys.info()["sysname"]
+  if (os_type == "Windows") {
+    if (length(argv) > 0) {
+      argv <- paste0(paste0("*.", argv), collapse = "; ")
+      argv <- matrix(
+        c("All files (*.*)", "*.*", argv, argv),
+        nrow = 2, ncol = 2, byrow = TRUE
+      )
+    } else {
+      argv <- c("All files", "*.*")
+    }
+    utils::choose.files(filters = argv)
+  } else if (os_type == "Darwin") {
+    pth <- file.path(system.file(package = "keystone"), "inst/scripts/choose.files.scpt")
+    if (length(argv) > 0) {
+      argv <- paste0("\"", paste0(unlist(argv), collapse = "\" \""), "\"")
+    }
+    fpath <- suppressWarnings(
+      system(
+        paste0("osascript -l JavaScript ", pth, " ", argv),
+        intern = TRUE
+      )
+    )
+    if (length(fpath) > 0) {
+      fpath <- strsplit(fpath, ", ")[[1]]
+      gsub("Path\\(\"(.*)\"\\)", "\\1", fpath)
+    } else {
+      character(0)
+    }
+  } else {
+    file.choose()
+  }
+}
+
+#' Choose a directory interactively
+#'
+#' @details Open a file dialog to select a directory. Uses JavaScript on Mac, utils::choose.dir on Windows, and dirname(file.choose()) on Linux
+#'
+#' @param ... Arguments passed to utils::choose.dir on Windows
+#'
+#' @return Path to the directory selected by the user
+#'
+#' @examples
+#' \dontrun{
+#' choose_dir()
+#' }
+#'
+
+## Swiped from package "radiant.data", which can be onerous to install
+#' @export
+choose_dir <- function(...)
+{
+  os_type <- Sys.info()["sysname"]
+  if (os_type == "Windows") {
+    utils::choose.dir(...)
+  } else if (os_type == "Darwin") {
+    pth <- file.path(system.file(package = "keystone"), "inst/script/choose.dir.scpt")
+    dpath <- suppressWarnings(
+      system(paste0("osascript -l JavaScript ", pth), intern = TRUE)
+    )
+    if (length(dpath) > 0) {
+      gsub("Path\\(\"(.*)\"\\)", "\\1", dpath)
+    } else {
+      character(0)
+    }
+  } else {
+    dirname(file.choose())
+  }
+}

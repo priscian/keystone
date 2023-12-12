@@ -139,6 +139,9 @@ color_nm_map <- c(
 ## V. JavaScript source for https://academo.org/demos/wavelength-to-colour-relationship/
 nm_to_rgb <- function(wavelength, Gamma = 0.8, IntensityMax = 255)
 {
+  if (is_invalid(wavelength))
+    return (NA_real_)
+
   if ((wavelength >= 380) && (wavelength < 440)) {
     red <- -(wavelength - 440) / (440 - 380)
     green <- 0.0
@@ -205,6 +208,43 @@ wavelength2col <- Vectorize(function(wavelength, Gamma = 0.8, IntensityMax = 255
 
   grDevices::rgb(RGB$R, RGB$G, RGB$B, maxColorValue = IntensityMax, ...) # Can add e.g. 'alpha' here.
 })
+
+
+## https://stackoverflow.com/questions/41209395/from-hex-color-code-or-rgb-to-color-name-using-r/41210444#41210444
+#' @export
+rgb2name <- function(r, g, b, show_match = FALSE)
+{
+  rgb2hex <- function(r, g, b) grDevices::rgb(r, g, b, maxColorValue = 255)
+
+  ## Create color name vs. RGB mapping table
+  colorMap <- dataframe(color_names = colors(), t(grDevices::col2rgb(colors())))
+
+  ## Prepare test colors
+  testDF <- dataframe(color_names = "test_color", red = r, green = g, blue = b)
+
+  ## Combine both tables
+  combDF <- rbind(testDF, colorMap)
+
+  ## Convert to matrix representation
+  combMat <- (as.matrix(combDF[, -1]))
+
+  ## Add row labels as color names
+  rownames(combMat) <- combDF[, 1]
+
+  ## Compute Euclidean distance between test RGB vector and all colours in the
+  ##   mapping table. Using 'dist()' function, compute distance matrix & retain
+  ##   only upper matrix. Find minimum distance point from test vector.
+
+  ## Find closest matching colour name
+  approxMatchCol <- which.min(as.matrix(dist(combMat, upper = TRUE))[1, ][-1])
+
+  ## Compare test color with approximate matching color:
+  if (show_match)
+    scales::show_col(c(rgb2hex(r, g, b), rgb2hex(colorMap[approxMatchCol, 2:4])))
+
+  ## Return color name
+  return (approxMatchCol)
+}
 
 
 #' @export

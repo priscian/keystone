@@ -147,3 +147,19 @@ LOESS <- function(
 # # (y2.fit <- fANCOVA::loess.as(cbind(x21, x22), y2, plot = TRUE))
 # dat <- cbind(x21, x22, y2) %>% as.data.frame
 # (y2.fit <- LOESS(y2 ~ x21 + x22, dat, span = NULL, plot = TRUE))
+
+
+## Calculate mode (most frequent value) of a vector
+## https://stackoverflow.com/questions/2547402/how-to-find-the-statistical-mode/45216553#45216553
+#' @export
+stat_mode <- function(x, return_multiple = TRUE, na.rm = FALSE)
+{
+  if (na.rm) {
+    x <- na.omit(x)
+  }
+  ux <- unique(x)
+  freq <- tabulate(match(x, ux))
+  mode_loc <- if (return_multiple) which(freq == max(freq)) else which.max(freq)
+
+  return (ux[mode_loc])
+}
