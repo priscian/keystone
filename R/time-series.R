@@ -320,7 +320,7 @@ plot_series <- function(
 
   ## Evaluate expression after creating graphics device but before plotting series.
   if (!is.null(start_callback))
-    plinth::poly_eval(start_callback)
+    poly_eval(start_callback)
 
   ## Plot confidence bands for series that have them.
   if (conf_int) {
@@ -557,7 +557,7 @@ plot_series <- function(
   })
 
   if (!is.null(end_callback))
-    plinth::poly_eval(end_callback)
+    poly_eval(end_callback)
 
   if (sign)
     eval(sign_callback)
@@ -836,7 +836,7 @@ create_smooth_variables <- function(
 
       zzz <- zz
       if (plot_series_friendly) {
-        ## Make a data set compatible with 'plinth::plot_series()'.
+        ## Make a data set compatible with 'keystone::plot_series()'.
         dv <- sapply(deriv, sprintf, fmt = deriv_suffix_template)
         ll <- lower_ci_suffix
         ul <- upper_ci_suffix
