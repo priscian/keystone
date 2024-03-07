@@ -1,6 +1,6 @@
 Package: keystone
 Title: Provide "Keystone" Functions for Most Scripts or Packages
-Version: 0.9.1
+Version: 0.10.0
 Authors@R: person("Jim", "Java", email = "james.j.java@gmail.com", role = c("aut", "cre"),
   comment = c(ORCID = "0000-0002-8254-3177"))
 Description: Provide "keystone" functions for most scripts or packages.
@@ -10,7 +10,7 @@ Imports: utils, tools, methods, memoise,
   devtools, remotes,
   pacman, foreign, rio, haven, readr,
   svDialogs,
-  data.table, tibble, tidyr, plyr, purrr, naniar,
+  data.table, tibble, tidyr, plyr, purrr, naniar, janitor,
   rlang, pryr,
   future, future.apply, doFuture,
   forcats,

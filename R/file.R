@@ -229,3 +229,45 @@ list_files <- function
 
   files
 }
+
+
+## A drop-in replacement for 'base::normalizePath()'
+#' @export
+normalize_path <- function(
+  path,
+  winslash = "/",
+  mustWork = FALSE
+)
+{
+  paths <- path
+
+  nas <- is.na(paths)
+  if (any(!nas)) {
+    paths[!nas] <- normalizePath(path.expand(paths[!nas]), winslash, mustWork)
+  }
+  if (any(nas)) {
+    paths[nas] <- NA_character_
+  }
+  paths <- unlist(paths)
+
+  if (!is_invalid(paths)) {
+    paths <- stringr::str_replace_all(paths, r"--{[/\\]+$}--", "")
+    paths <- stringr::str_replace_all(paths, "(?!^//)/[/]+", "/")
+    paths <- stringr::str_replace_all(paths, r"--{(?!^\\\\)\\[\\]+}--", r"--{\\}--")
+
+    if (winslash == "/") {
+      paths <- stringr::str_replace(paths, r"--{^\\\\}--", "//")
+    }
+
+    hasDotStart <- stringr::str_detect(paths, r"--{^.[/\\]}--")
+    if (isTRUE(any(hasDotStart))) {
+      #paths[hasDotStart] <- gsub("^[.]/", paste0(getwd(), "/"), path[hasDotStart])
+      paths[hasDotStart] <- stringr::str_replace(paths[hasDotStart],
+        "^\\.", paste0(getwd(), winslash))
+    }
+    #paths <- gsub("/$", "", paths)
+    paths <- stringr::str_replace(paths, r"--{[/\\]$}--", "")
+  }
+
+  return (paths)
+}

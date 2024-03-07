@@ -42,7 +42,7 @@ plot_series <- function(
   interpolate = FALSE,
   plot_type = c("single", "multiple"),
   type = "l",
-  col = NULL, col_fun = colorspace::rainbow_hcl, col_fun... = list(l = 65), alpha = 0.9, lwd = 2,
+  col = NULL, col_fun = colorspace::rainbow_hcl, col_fun... = list(l = 65), alpha = 1, lwd = 2,
   main = "", xlab = "", ylab = "",
   unit = NULL,
   dev.new... = list(), bg = scales::alpha("gray", 0.1),
@@ -50,7 +50,7 @@ plot_series <- function(
   xaxs = "r", yaxs = "r", cex.xaxis = 1.0, cex.yaxis = 1.0,
   xaxisTicks... = list(), yaxisTicks... = list(), # Arguments to grDevices::axisTicks()
   grid... = list(),
-  conf_int = FALSE, conf_int_suffix = "_uncertainty", ci_alpha = 0.3, polygon... = list(),
+  conf_int = FALSE, conf_int_suffix = "_uncertainty", ci_alpha = 0.2, polygon... = list(),
   trend = FALSE, trend_lwd = lwd, trend_legend_inset = c(0.2, 0.2), trend... = list(), extra_trends = list(),
   loess = FALSE, loess... = list(), loess_series = NULL, lines.loess... = list(),
   segmented = FALSE, segmented... = list(),
