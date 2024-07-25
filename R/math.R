@@ -91,6 +91,7 @@ interpNA <- function(
   {
     n <- length(x)
     idx <- (1:n)[!is.na(x)]
+    if (length(idx) <= 1) return (x)
     y <- fun(x = idx, y = x[idx], xout = 1:n, method = method, f = f)$y
 
     ## If spline interpolation, allow terminal NAs to be interpolated.

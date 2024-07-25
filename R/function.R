@@ -74,7 +74,9 @@ get_all_args <- function(defaults = FALSE)
 ## N.B. This patch only works for memoization to a disk cache.
 #' @export
 patch_memoised_for_subcaching <- function(
-  fun # A 'memoise()'d function
+  fun, # A 'memoise()'d function
+  name,
+  key
 )
 {
   if (!memoise::is.memoised(fun)) {
@@ -85,7 +87,14 @@ patch_memoised_for_subcaching <- function(
 
   flit <- function() { }
   rlang::fn_body(flit) <- rlang::fn_body(fun)
-  formals(flit) <- args(fun) %>% formals %>% c(clear_1_cache = FALSE, SUFFIX = "")
+  if (is_invalid(key)) {
+    formals(flit) <- args(fun) %>% formals %>%
+      #utils::modifyList(alist(clear_1_cache = FALSE, KEY =, SUFFIX = ""), keep.null = TRUE)
+      utils::modifyList(alist(clear_1_cache = FALSE, KEY = NULL, SUFFIX = ""), keep.null = TRUE)
+  } else {
+    formals(flit) <- args(fun) %>% formals %>%
+      utils::modifyList(list(clear_1_cache = FALSE, KEY = key, SUFFIX = ""), keep.null = TRUE)
+  }
 
   ## Where does the 'key' assignment happen?
   i <- sapply(as.list(rlang::fn_body(flit)),
@@ -93,8 +102,15 @@ patch_memoised_for_subcaching <- function(
       simplify = TRUE) %>% which
   ## Inject code to delete sub-cache of this function call
   rlang::fn_body(flit) <- rlang::fn_body(flit) %>% as.list %>%
+    #append(quote({ browser() }), 1) %>%
     append(quote({
-      key <- encl$`_hash`(c(encl$`_f_hash`)) %>% paste0(SUFFIX)
+      if (is.null(KEY)) {
+        key <- encl$`_hash`(c(encl$`_f_hash`))
+      } else {
+        key <- KEY
+      }
+      key <- paste0(key, SUFFIX)
+
       cache_path <- encl$`_cache`$keys %>% environment %>% `$`("path")
       ## Only proceed w/ subcache handling if function is memoised to a disk cache
       # cat(sprintf("'is.null(cache_path)' = %s", is.null(cache_path)), fill = TRUE) # Is function memoised to a disk cache?
@@ -139,19 +155,72 @@ patch_memoised_for_subcaching <- function(
       }
     }), i) %>%
     append(quote({
-      clear_1_cache <- args$clear_1_cache
-      SUFFIX <- args$SUFFIX
-      if (is.null(clear_1_cache))
+      if (is.null(clear_1_cache)) {
         clear_1_cache <- FALSE
+      }
       args$clear_1_cache <- NULL
-      #mc <- as.list(mc) %>% `[[<-`("clear_1_cache", NULL) %>% as.call
-      mc <- as.list(mc) %>% `[<-`(c("clear_1_cache", "SUFFIX"), NULL) %>% as.call
+
+      args$KEY <- NULL
+
+      if (is.null(SUFFIX)) {
+        SUFFIX <- ""
+      }
+      args$SUFFIX <- NULL
+
+      mc <- as.list(mc) %>% `[<-`(c("clear_1_cache", "KEY", "SUFFIX"), NULL) %>% as.call
     }), i - 1) %>% as.call
 
   environment(flit) <- environment(fun)
   attributes(flit) <- attributes(fun)
 
+  if (!missing(name))
+    environment(flit)$`_f_hash` <- name
+
   flit
+}
+
+
+#' @export
+memoise_package_function_ <- function(
+  sym,
+  env,
+  cache,
+  pattern = "^.*?namespace:(.*?)>",
+  group = 1,
+  str_extract... = list(),
+  replace_env = globalenv(),
+  ... # Other arguments to 'patch_memoised_for_subcaching()'
+)
+{
+  sym <- as.name(sym)
+  namespace <- NULL
+  if (is.character(env)) {
+    namespace <- env
+    env <- asNamespace(env)
+  }
+
+  unlockBinding(sym, env)
+  substitute(`__FUNSYM__` <<- memoise::memoise(`__FUNSYM__`, cache = cache) %>%
+    keystone::patch_memoised_for_subcaching(name = as.character(sym), ...),
+    list(`__FUNSYM__` = sym)) %>% eval()
+  # substitute({ assign(as.character(sym), memoise::memoise(`__FUNSYM__`, cache = cache) %>%
+  #   keystone::patch_memoised_for_subcaching(name = as.character(sym)) } %>%
+  #   list(`__FUNSYM__` = sym)) %>% eval()
+  lockBinding(sym, env)
+
+  if (is_invalid(namespace)) {
+    str_extractArgs <- list(
+      string = capture.output(env),
+      pattern = pattern,
+      group = group
+    )
+    str_extractArgs <- utils::modifyList(str_extractArgs, str_extract..., keep.null = TRUE)
+    namespace <- do.call(stringr::str_extract, str_extractArgs)
+  }
+
+  substitute(`__FUNSYM__` <<- get(`__FUN__`, asNamespace(`__NAMESPACE__`)),
+    list(`__FUNSYM__` = sym, `__FUN__` = as.character(sym), `__NAMESPACE__` = namespace)) %>%
+    eval(envir = replace_env)
 }
 
 

@@ -16,7 +16,8 @@ is_invalid <- function(x, ...)
 
   if (is.list(x))
     return (all(sapply(x, is_invalid)))
-  else if (is.vector(x))
+  #else if (is.vector(x))
+  else if (is.atomic(x) || is.expression(x))
     return (all(is.na(x)))
   else
     return (FALSE)

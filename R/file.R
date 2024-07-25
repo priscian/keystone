@@ -171,17 +171,7 @@ list_files <- function
     return(files)
   }
 
-  if (absolute) {
-    path <- normalizePath(path, mustWork = TRUE)
-  }
-  else {
-    # path <- sub("[/\\]+$", "", path)
-    # path <- sub("/[/]+", "/", path)
-    # path <- sub("\\[\\]+", "\\", path)
-    path <- stringr::str_replace_all(path, r"--{[/\\]+$}--", "")
-    path <- stringr::str_replace_all(path, "(?!^//)/[/]+", "/")
-    path <- stringr::str_replace_all(path, r"--{(?!^\\\\)\\[\\]+}--", r"--{\\}--")
-  }
+  path %<>% normalize_path()
 
   depth <- as.numeric(recursive)
   if (is.logical(recursive) && recursive)
