@@ -166,3 +166,33 @@ cut2q <- function(v, cuts, trim = FALSE, fmt = "%1.1f", dash = "--", ...)
 
   return (f)
 }
+
+
+#' @export
+cut_numeric <- function(x, cuts, g, ...) # '?Hmisc::cut2' for some parameters
+{
+  att <- attributes(x); att <- att[names(att) %nin% c("levels")] # Save object attributes.
+  att$class <- c(att$class, "factor") # Note that 'c(NULL, "factor")' is the same as 'c("factor")'.
+
+  if (is_invalid(g) && is_invalid(cuts)) {
+    g <- 4
+  }
+
+  if (is_invalid(cuts)) {
+    cuts <- NULL
+  } else {
+    cuts <- as.vector(cuts)
+  }
+
+  if (!is_invalid(g)) {
+    cuts <- c(cuts, stats::quantile(x, na.rm = TRUE, probs = seq(0, 1, length.out = g + 1))  %>%
+      as.vector())
+  }
+
+  cuts <- cuts %>% unique() %>% sort()
+  f <- Hmisc::cut2(x, cuts, ...)
+
+  attributes(f) <- utils::modifyList(attributes(f), att, keep.null = TRUE) # Restore object attributes.
+
+  return (f)
+}
